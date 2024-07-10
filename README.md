@@ -13,3 +13,31 @@
 - Удаление постов
 - Написание комментариев
 - Редактирование ролей
+
+## Установка
+
+Для начала работы с приложением выполните следующие шаги:
+
+1. Клонируйте репозиторий:
+   
+    ```git clone https://github.com/xtramemium/Blog-project.git```
+    
+2. Перейдите в директорию проекта:
+   
+    ```cd Blog-project```
+    
+3. Установите зависимости:
+   
+    ```npm install```
+    
+
+4. Перейдите в папку backend и создайте там .env файл и добавьте в него следующие данные:
+
+```DB_CONNECTION='mongodb+srv://gvanteev85:8ifKa9HZRhP2Zkgi@cluster0.qsl8lkr.mongodb.net/blog?retryWrites=true&w=majority'``` 
+```JWT_KEY='SecretKeyczf0912nv1```
+
+5. Запустите приложение:
+   
+    ```npm run dev```
+    
+    Приложение будет запущено и доступно по адресу http://localhost:3000.
