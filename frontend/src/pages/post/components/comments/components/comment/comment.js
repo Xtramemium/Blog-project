@@ -91,7 +91,7 @@ export const Comment = styled(CommentComtainer)`
 
 Comment.propTypes = {
 	postId: PropTypes.string.isRequired,
-	id: PropTypes.number.isRequired,
+	id: PropTypes.string.isRequired,
 	author: PropTypes.string.isRequired,
 	content: PropTypes.string.isRequired,
 	publishedAt: PropTypes.string.isRequired,

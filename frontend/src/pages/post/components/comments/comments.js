@@ -10,12 +10,20 @@ import styled from 'styled-components';
 
 const CommentsContainer = ({ className, comments, postId }) => {
 	const [newComment, setNewComment] = useState('');
+	const [commentError, setCommentError] = useState('');
 	const userRole = useSelector(selectUserRole);
 	const dispatch = useDispatch();
 
 	const onNewCommentAdd = (postId, content) => {
-		dispatch(addCommentAsync(postId, content));
-		setNewComment('');
+		dispatch(addCommentAsync(postId, content)).then(({ error }) => {
+			if (error) {
+				setCommentError(error);
+				return;
+			}
+
+			setCommentError('');
+			setNewComment('');
+		});
 	};
 
 	const isGuest = userRole === ROLE.GUEST;
@@ -28,7 +36,10 @@ const CommentsContainer = ({ className, comments, postId }) => {
 						name="comment"
 						value={newComment}
 						placeholder="Комментарий..."
-						onChange={({ target }) => setNewComment(target.value)}
+						onChange={({ target }) => {
+							setNewComment(target.value);
+							setCommentError('');
+						}}
 					></textarea>
 					<Icon
 						id="fa-paper-plane-o"
@@ -38,6 +49,7 @@ const CommentsContainer = ({ className, comments, postId }) => {
 					/>
 				</div>
 			)}
+			{commentError && <div className="comment-error">{commentError}</div>}
 			<div className="comments">
 				{comments.map(({ id, author, content, publishedAt }) => (
 					<Comment
@@ -69,6 +81,11 @@ export const Comments = styled(CommentsContainer)`
 		height: 120px;
 		font-size: 18px;
 		resize: none;
+	}
+
+	& .comment-error {
+		margin-top: 12px;
+		color: #c00;
 	}
 `;
 

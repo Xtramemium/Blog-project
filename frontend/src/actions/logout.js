@@ -1,10 +1,12 @@
-import { request } from '../utils/request';
+import { logoutUser } from '../api';
+import { clearSessionUser } from '../utils';
 import { ACTION_TYPE } from './action-type';
 
-export const logout = () => {
-	request('/logout', 'POST');
+export const logout = () => (dispatch) => {
+	logoutUser();
+	clearSessionUser();
 
-	return {
+	dispatch({
 		type: ACTION_TYPE.LOGOUT,
-	};
+	});
 };

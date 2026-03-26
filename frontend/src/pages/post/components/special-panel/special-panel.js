@@ -18,8 +18,10 @@ const SpecialPanelContainer = ({ className, id, publishedAt, editButton }) => {
 			openModal({
 				text: 'Удалить статью?',
 				onConfirm: () => {
-					dispatch(removePostAsync(id)).then(() => {
-						navigate('/');
+					dispatch(removePostAsync(id)).then(({ error }) => {
+						if (!error) {
+							navigate('/');
+						}
 					});
 					dispatch(CLOSE_MODAL);
 				},

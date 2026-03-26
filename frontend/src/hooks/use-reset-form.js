@@ -1,19 +1,16 @@
-import { useEffect } from 'react';
-import { useStore } from 'react-redux';
+import { useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { selectLogoutVersion } from '../selectors';
 
 export const useResetForm = (reset) => {
-	const store = useStore();
+	const logoutVersion = useSelector(selectLogoutVersion);
+	const previousLogoutVersionRef = useRef(logoutVersion);
 
 	useEffect(() => {
-		let currentWasLogout = store.getState().app.wasLogout;
+		if (logoutVersion !== previousLogoutVersionRef.current) {
+			reset();
+		}
 
-		return store.subscribe(() => {
-			let previousWasLogout = currentWasLogout;
-			currentWasLogout = store.getState().app.wasLogout;
-
-			if (currentWasLogout !== previousWasLogout) {
-				reset();
-			}
-		});
-	}, [reset, store]);
+		previousLogoutVersionRef.current = logoutVersion;
+	}, [logoutVersion, reset]);
 };

@@ -1,7 +1,7 @@
 import { ACTION_TYPE } from '../actions';
 
 const initialAppState = {
-	wasLogout: false,
+	logoutVersion: 0,
 	modal: {
 		isOpen: false,
 		text: '',
@@ -15,7 +15,7 @@ export const appReducer = (state = initialAppState, action) => {
 		case ACTION_TYPE.LOGOUT:
 			return {
 				...state,
-				wasLogout: !state.wasLogout,
+				logoutVersion: state.logoutVersion + 1,
 			};
 		case ACTION_TYPE.OPEN_MODAL:
 			return {

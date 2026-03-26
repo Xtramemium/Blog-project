@@ -1,38 +1,53 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getPosts } from '../../api';
 import { Pagination, PostCard, Search } from './components';
 import { PAGINATION_LIMIT } from '../../constants';
-import { debounce } from './utils';
 import styled from 'styled-components';
-import { request } from '../../utils/request';
 
 const MainContainer = ({ className }) => {
 	const [posts, setPosts] = useState([]);
 	const [page, setPage] = useState(1);
 	const [lastPage, setLastPage] = useState(1);
 	const [searchPhrase, setSearchPhrase] = useState('');
-	const [shouldSearch, setShouldSearch] = useState(false);
+	const [errorMessage, setErrorMessage] = useState('');
 
 	useEffect(() => {
-		request(
-			`/posts?search=${searchPhrase}&page=${page}&limit=${PAGINATION_LIMIT}`,
-		).then(({ data: { posts, lastPage } }) => {
-			setPosts(posts);
-			setLastPage(lastPage);
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [page, shouldSearch]);
+		let isCancelled = false;
+		const searchTimeoutId = setTimeout(() => {
+			getPosts(searchPhrase, page, PAGINATION_LIMIT).then(({ error, data }) => {
+				if (isCancelled) {
+					return;
+				}
 
-	const startDelayedSearch = useMemo(() => debounce(setShouldSearch, 2000), []);
+				if (error) {
+					setErrorMessage(error);
+					setPosts([]);
+					setLastPage(1);
+					return;
+				}
+
+				setErrorMessage('');
+				setPosts(data.posts);
+				setLastPage(data.lastPage);
+			});
+		}, 300);
+
+		return () => {
+			isCancelled = true;
+			clearTimeout(searchTimeoutId);
+		};
+	}, [page, searchPhrase]);
 
 	const onSearch = ({ target }) => {
 		setSearchPhrase(target.value);
-		startDelayedSearch(!shouldSearch);
+		setPage(1);
 	};
 
 	return (
 		<div className={className}>
 			<div className="posts-and-search">
 				<Search searchPhrase={searchPhrase} onChange={onSearch} />
+				{errorMessage && <div className="request-error">{errorMessage}</div>}
 				{posts.length > 0 ? (
 					<div className="post-list">
 						{posts.map(({ id, title, imageUrl, publishedAt, comments }) => (
@@ -72,5 +87,11 @@ export const Main = styled(MainContainer)`
 		font-size: 18px;
 		margin-top: 40px;
 		text-align: center;
+	}
+
+	& .request-error {
+		margin-top: 24px;
+		text-align: center;
+		color: #c00;
 	}
 `;

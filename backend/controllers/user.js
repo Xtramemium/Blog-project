@@ -1,67 +1,91 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const { generate } = require('../helpers/token');
-const ROLES = require('../constants/roles')
+const ROLES = require('../constants/roles');
+const HttpError = require('../utils/http-error');
 
 async function register(login, password) {
-    if (!password) {
-        throw new Error('Password is empty');
-    }
+	if (!login?.trim()) {
+		throw new HttpError(400, 'Login is empty');
+	}
 
-    const passwordHash = await bcrypt.hash(password, 10);
+	if (!password) {
+		throw new HttpError(400, 'Password is empty');
+	}
 
-    const user = await User.create({ login, password: passwordHash })
-    const token = generate({ id: user.id });
+	const existingUser = await User.findOne({ login: login.trim() });
 
-    return { user, token };
+	if (existingUser) {
+		throw new HttpError(409, 'User with this login already exists');
+	}
+
+	const passwordHash = await bcrypt.hash(password, 10);
+	const user = await User.create({ login: login.trim(), password: passwordHash });
+	const token = generate({ id: user.id });
+
+	return { user, token };
 }
 
 async function login(login, password) {
-    const user = await User.findOne({ login });
+	if (!login?.trim() || !password) {
+		throw new HttpError(400, 'Login or password is empty');
+	}
 
-    if (!user) {
-        throw new Error('User not found')
-    }
+	const user = await User.findOne({ login: login.trim() });
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+	if (!user) {
+		throw new HttpError(404, 'User not found');
+	}
 
-    if (!isPasswordMatch) {
-        throw new Error('Wrong password')
-    }
+	const isPasswordMatch = await bcrypt.compare(password, user.password);
 
-    const token = generate({ id: user.id });
+	if (!isPasswordMatch) {
+		throw new HttpError(401, 'Wrong password');
+	}
 
-    return { token, user };
+	const token = generate({ id: user.id });
+
+	return { token, user };
 }
 
 function getUsers() {
-    return User.find();
+	return User.find().sort({ createdAt: -1 });
 }
 
 function getRoles() {
-    return [
-        { id: ROLES.ADMIN, name: 'Admin' },
-        { id: ROLES.MODERATOR, name: 'Moderator' },
-        { id: ROLES.USER, name: 'User' },
-    ]
+	return [
+		{ id: ROLES.ADMIN, name: 'Admin' },
+		{ id: ROLES.MODERATOR, name: 'Moderator' },
+		{ id: ROLES.USER, name: 'User' },
+	];
 }
 
-// delete
+async function deleteUser(id) {
+	const result = await User.deleteOne({ _id: id });
 
-function deleteUser(id) {
-    return User.deleteOne({ _id: id })
+	if (!result.deletedCount) {
+		throw new HttpError(404, 'User not found');
+	}
 }
 
-// edit (roles)
-function updateUser(id, userData) {
-    return User.findByIdAndUpdate(id, userData, { returnDocument: 'after' })
+async function updateUser(id, userData) {
+	const updatedUser = await User.findByIdAndUpdate(id, userData, {
+		returnDocument: 'after',
+		runValidators: true,
+	});
+
+	if (!updatedUser) {
+		throw new HttpError(404, 'User not found');
+	}
+
+	return updatedUser;
 }
 
 module.exports = {
-    register,
-    login,
-    getUsers,
-    getRoles,
-    deleteUser,
-    updateUser
-}
+	register,
+	login,
+	getUsers,
+	getRoles,
+	deleteUser,
+	updateUser,
+};

@@ -29,7 +29,6 @@ const ControlPanelContainer = ({ className }) => {
 
 	const onLogout = () => {
 		dispatch(logout());
-		sessionStorage.removeItem('userData');
 	};
 
 	const isAdmin = checkAccess([ROLE.ADMIN], roleId);

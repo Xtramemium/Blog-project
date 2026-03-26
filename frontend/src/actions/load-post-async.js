@@ -1,8 +1,8 @@
-import { request } from '../utils/request';
+import { getPost } from '../api';
 import { setPostData } from './set-post-data';
 
 export const loadPostAsync = (postId) => (dispatch) =>
-	request(`/posts/${postId}`).then((postData) => {
+	getPost(postId).then((postData) => {
 		if (postData.data) {
 			dispatch(setPostData(postData.data));
 		}

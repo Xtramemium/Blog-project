@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { updateUserRole } from '../../../../api';
 import { Icon } from '../../../../components';
 import { TableRow } from '../table-row/table-row';
 import { PROP_TYPE } from '../../../../constants';
 import styled from 'styled-components';
-import { request } from '../../../../utils/request';
 
 const UserRowContainer = ({
 	className,
@@ -17,13 +17,21 @@ const UserRowContainer = ({
 }) => {
 	const [initialRoleId, setInitialRoleId] = useState(userRoleId);
 	const [selectedRoleId, setSelectedRoleId] = useState(userRoleId);
+	const [saveError, setSaveError] = useState('');
 
 	const onRoleChange = ({ target }) => {
 		setSelectedRoleId(Number(target.value));
+		setSaveError('');
 	};
 
 	const onRoleSave = (userId, newUserRoleId) => {
-		request(`/users/${userId}`, 'PATCH', { roleId: newUserRoleId }).then(() => {
+		updateUserRole(userId, newUserRoleId).then(({ error }) => {
+			if (error) {
+				setSaveError(error);
+				return;
+			}
+
+			setSaveError('');
 			setInitialRoleId(newUserRoleId);
 		});
 	};
@@ -51,6 +59,7 @@ const UserRowContainer = ({
 					/>
 				</div>
 			</TableRow>
+			{saveError && <div className="save-error">{saveError}</div>}
 			<Icon id="fa-trash-o" margin="0 0 0 10px" onClick={onUserRemove} />
 		</div>
 	);
@@ -63,6 +72,11 @@ export const UserRow = styled(UserRowContainer)`
 	& select {
 		padding: 0 5px;
 		font-size: 16px;
+	}
+
+	& .save-error {
+		margin: 8px 0 0;
+		color: #c00;
 	}
 `;
 

@@ -6,6 +6,7 @@ import { Authorization, Main, Post, Registration, Users } from './pages';
 import { setUser } from './actions';
 import { ERROR } from './constants';
 import styled from 'styled-components';
+import { loadSessionUser } from './utils';
 
 const AppColumn = styled.div`
 	display: flex;
@@ -26,20 +27,11 @@ export const Blog = () => {
 	const dispatch = useDispatch();
 
 	useLayoutEffect(() => {
-		const currentUserDataJSON = sessionStorage.getItem('userData');
+		const currentUserData = loadSessionUser();
 
-		if (!currentUserDataJSON) {
-			return;
+		if (currentUserData) {
+			dispatch(setUser(currentUserData));
 		}
-
-		const currentUserData = JSON.parse(currentUserDataJSON);
-
-		dispatch(
-			setUser({
-				...currentUserData,
-				roleId: Number(currentUserData.roleId),
-			}),
-		);
 	}, [dispatch]);
 
 	return (

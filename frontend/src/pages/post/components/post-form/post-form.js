@@ -14,6 +14,7 @@ const PostFormContainer = ({
 }) => {
 	const [imageUrlValue, setImageUrlValue] = useState(imageUrl);
 	const [titleValue, setTitleValue] = useState(title);
+	const [saveError, setSaveError] = useState('');
 	const contentRef = useRef(null);
 
 	useLayoutEffect(() => {
@@ -33,11 +34,26 @@ const PostFormContainer = ({
 				title: titleValue,
 				content: newContent,
 			}),
-		).then(({ id }) => navigate(`/post/${id}`));
+		).then(({ error, data }) => {
+			if (error) {
+				setSaveError(error);
+				return;
+			}
+
+			setSaveError('');
+			navigate(`/post/${data.id}`);
+		});
 	};
 
-	const onImageChange = ({ target }) => setImageUrlValue(target.value);
-	const onTitleChange = ({ target }) => setTitleValue(target.value);
+	const onImageChange = ({ target }) => {
+		setImageUrlValue(target.value);
+		setSaveError('');
+	};
+
+	const onTitleChange = ({ target }) => {
+		setTitleValue(target.value);
+		setSaveError('');
+	};
 
 	return (
 		<div className={className}>
@@ -69,9 +85,11 @@ const PostFormContainer = ({
 				contentEditable={true}
 				suppressContentEditableWarning={true}
 				className="post-text"
+				onInput={() => setSaveError('')}
 			>
 				{content}
 			</div>
+			{saveError && <div className="save-error">{saveError}</div>}
 		</div>
 	);
 };
@@ -87,6 +105,11 @@ export const PostForm = styled(PostFormContainer)`
 		border: 1px solid #000;
 		font-size: 18px;
 		white-space: pre-line;
+	}
+
+	& .save-error {
+		margin-top: 12px;
+		color: #c00;
 	}
 `;
 

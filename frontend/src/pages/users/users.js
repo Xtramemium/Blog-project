@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { PrivateContent, H2 } from '../../components';
+import { deleteUser, getRoles, getUsers } from '../../api';
 import { TableRow, UserRow } from './components';
 import { selectUserRole } from '../../selectors';
 import { checkAccess } from '../../utils';
 import { ROLE } from '../../constants';
 import styled from 'styled-components';
-import { request } from '../../utils/request';
 
 const UsersContainer = ({ className }) => {
 	const [users, setUsers] = useState([]);
@@ -20,7 +20,7 @@ const UsersContainer = ({ className }) => {
 			return;
 		}
 
-		Promise.all([request('/users'), request('/users/roles')]).then(
+		Promise.all([getUsers(), getRoles()]).then(
 			([usersRes, rolesRes]) => {
 				if (usersRes.error || rolesRes.error) {
 					setErrorMessage(usersRes.error || rolesRes.error);
@@ -38,7 +38,12 @@ const UsersContainer = ({ className }) => {
 			return;
 		}
 
-		request(`/users/${userId}`, 'DELETE').then(() => {
+		deleteUser(userId).then(({ error }) => {
+			if (error) {
+				setErrorMessage(error);
+				return;
+			}
+
 			setShouldUpdateUserList(!shouldUpdateUserList);
 		});
 	};

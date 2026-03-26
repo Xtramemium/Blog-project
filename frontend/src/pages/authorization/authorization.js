@@ -10,24 +10,13 @@ import { setUser } from '../../actions';
 import { selectUserRole } from '../../selectors';
 import styled from 'styled-components';
 import { ROLE } from '../../constants';
-import { request } from '../../utils/request';
+import { loginUser } from '../../api';
+import { saveSessionUser } from '../../utils';
+import { loginValidation, passwordValidation } from '../../utils/auth-validation';
 
 const authFormSchema = yup.object().shape({
-	login: yup
-		.string()
-		.required('Заполните логин')
-		.matches(/^\w+$/, 'Неверно заполнен логин. Допускаются только буквы и цифры')
-		.min(3, 'Неверно заполнен логин. Минимум 3 символа')
-		.max(15, 'Неверно заполнен логин. Максимум 15 символов'),
-	password: yup
-		.string()
-		.required('Заполните пароль')
-		.matches(
-			/^[\w#%]+$/,
-			'Неверно заполнен пароль. Допускаются буквы, цифры и знаки # %',
-		)
-		.min(6, 'Неверно заполнен пароль. Минимум 6 символов')
-		.max(30, 'Неверно заполнен пароль. Максимум 30 символов'),
+	login: loginValidation,
+	password: passwordValidation,
 });
 
 const StyledLink = styled(Link)`
@@ -60,14 +49,14 @@ const AuthorizationContainer = ({ className }) => {
 	useResetForm(reset);
 
 	const onSubmit = ({ login, password }) => {
-		request('/login', 'POST', { login, password }).then(({ error, user }) => {
+		loginUser({ login, password }).then(({ error, user }) => {
 			if (error) {
 				setServerError(`Ошибка запроса: ${error}`);
 				return;
 			}
 
 			dispatch(setUser(user));
-			sessionStorage.setItem('userData', JSON.stringify(user));
+			saveSessionUser(user);
 		});
 	};
 

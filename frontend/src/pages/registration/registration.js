@@ -10,24 +10,13 @@ import { setUser } from '../../actions';
 import { selectUserRole } from '../../selectors';
 import { ROLE } from '../../constants';
 import styled from 'styled-components';
-import { request } from '../../utils/request';
+import { registerUser } from '../../api';
+import { saveSessionUser } from '../../utils';
+import { loginValidation, passwordValidation } from '../../utils/auth-validation';
 
 const regFormSchema = yup.object().shape({
-	login: yup
-		.string()
-		.required('Заполните логин')
-		.matches(/^\w+$/, 'Неверно заполнен логин. Допускаются только буквы и цифры')
-		.min(3, 'Неверно заполнен логин. Минимум 3 символа')
-		.max(15, 'Неверно заполнен логин. Максимум 15 символов'),
-	password: yup
-		.string()
-		.required('Заполните пароль')
-		.matches(
-			/^[\w#%]+$/,
-			'Неверно заполнен пароль. Допускаются буквы, цифры и знаки # %',
-		)
-		.min(6, 'Неверно заполнен пароль. Минимум 6 символов')
-		.max(30, 'Неверно заполнен пароль. Максимум 30 символов'),
+	login: loginValidation,
+	password: passwordValidation,
 	passcheck: yup
 		.string()
 		.required('Заполните повтор пароля')
@@ -58,14 +47,14 @@ const RegistrationContainer = ({ className }) => {
 	useResetForm(reset);
 
 	const onSubmit = ({ login, password }) => {
-		request('/register', 'POST', { login, password }).then(({ error, user }) => {
+		registerUser({ login, password }).then(({ error, user }) => {
 			if (error) {
 				setServerError(`Ошибка запроса: ${error}`);
 				return;
 			}
 
 			dispatch(setUser(user));
-			sessionStorage.setItem('userData', JSON.stringify(user));
+			saveSessionUser(user);
 		});
 	};
 

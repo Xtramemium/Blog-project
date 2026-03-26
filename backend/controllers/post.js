@@ -1,62 +1,82 @@
-const Post = require('../models/Post')
+const Post = require('../models/Post');
+const escapeRegExp = require('../utils/escape-regexp');
+const HttpError = require('../utils/http-error');
 
-// add
 async function addPost(post) {
-    const newPost = await Post.create(post);
+	const newPost = await Post.create(post);
 
-    await newPost.populate({
-        path: 'comments',
-        populate: 'author'
-    })
+	await newPost.populate({
+		path: 'comments',
+		populate: 'author',
+	});
 
-    return newPost
+	return newPost;
 }
 
-// edit
 async function editPost(id, post) {
-    const newPost = await Post.findByIdAndUpdate(id, post, { returnDocument: 'after' })
+	const updatedPost = await Post.findByIdAndUpdate(id, post, {
+		returnDocument: 'after',
+		runValidators: true,
+	});
 
-    await newPost.populate({
-        path: 'comments',
-        populate: 'author'
-    })
+	if (!updatedPost) {
+		throw new HttpError(404, 'Post not found');
+	}
 
-    return newPost;
+	await updatedPost.populate({
+		path: 'comments',
+		populate: 'author',
+	});
+
+	return updatedPost;
 }
 
-// delete
-function deletePost(id) {
-    return Post.deleteOne({ _id: id })
+async function deletePost(id) {
+	const result = await Post.deleteOne({ _id: id });
+
+	if (!result.deletedCount) {
+		throw new HttpError(404, 'Post not found');
+	}
 }
 
-// get list with search and pagination
 async function getPosts(search = '', limit = 10, page = 1) {
-    const [posts, count] = await Promise.all([
-        Post.find({ title: { $regex: search, $options: 'i' } })
-            .limit(limit)
-            .skip((page - 1) * limit)
-            .sort({ createdAt: -1 }),
-        Post.countDocuments({ title: { $regex: search, $options: 'i' } })
-    ])
+	const normalizedLimit = Number(limit) > 0 ? Number(limit) : 10;
+	const normalizedPage = Number(page) > 0 ? Number(page) : 1;
+	const titleFilter = {
+		title: { $regex: escapeRegExp(search), $options: 'i' },
+	};
 
-    return {
-        posts,
-        lastPage: Math.ceil(count / limit)
-    }
+	const [posts, count] = await Promise.all([
+		Post.find(titleFilter)
+			.limit(normalizedLimit)
+			.skip((normalizedPage - 1) * normalizedLimit)
+			.sort({ createdAt: -1 }),
+		Post.countDocuments(titleFilter),
+	]);
+
+	return {
+		posts,
+		lastPage: Math.max(1, Math.ceil(count / normalizedLimit)),
+	};
 }
 
-// get item
-function getPost(id) {
-    return Post.findById(id).populate({
-        path: 'comments',
-        populate: 'author'
-    });
+async function getPost(id) {
+	const post = await Post.findById(id).populate({
+		path: 'comments',
+		populate: 'author',
+	});
+
+	if (!post) {
+		throw new HttpError(404, 'Post not found');
+	}
+
+	return post;
 }
 
 module.exports = {
-    addPost,
-    editPost,
-    deletePost,
-    getPosts,
-    getPost
-}
+	addPost,
+	editPost,
+	deletePost,
+	getPosts,
+	getPost,
+};

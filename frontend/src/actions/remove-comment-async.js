@@ -1,8 +1,12 @@
-import { request } from '../utils/request';
+import { deleteComment } from '../api';
 import { removeComment } from './remove-comment';
 
 export const removeCommentAsync = (postId, id) => (dispatch) => {
-	request(`/posts/${postId}/comments/${id}`, 'DELETE').then(() => {
-		dispatch(removeComment(id));
+	return deleteComment(postId, id).then((response) => {
+		if (!response.error) {
+			dispatch(removeComment(id));
+		}
+
+		return response;
 	});
 };

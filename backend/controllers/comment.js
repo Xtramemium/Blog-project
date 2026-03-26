@@ -1,25 +1,49 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const HttpError = require('../utils/http-error');
 
-// add
 async function addComment(postId, comment) {
-    const newComment = await Comment.create(comment);
+	const content = comment.content?.trim();
 
-    await Post.findByIdAndUpdate(postId, { $push: { comments: newComment } })
+	if (!content) {
+		throw new HttpError(400, 'Comment content is empty');
+	}
 
-    await newComment.populate('author')
+	const post = await Post.findById(postId);
 
-    return newComment;
+	if (!post) {
+		throw new HttpError(404, 'Post not found');
+	}
+
+	const newComment = await Comment.create({
+		...comment,
+		content,
+	});
+
+	await Post.findByIdAndUpdate(postId, { $push: { comments: newComment } });
+
+	await newComment.populate('author');
+
+	return newComment;
 }
 
-// delete
-
 async function deleteComment(postId, commentId) {
-    await Comment.deleteOne({_id: commentId});
-    await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } })
+	const post = await Post.findById(postId);
+
+	if (!post) {
+		throw new HttpError(404, 'Post not found');
+	}
+
+	const result = await Comment.deleteOne({ _id: commentId });
+
+	if (!result.deletedCount) {
+		throw new HttpError(404, 'Comment not found');
+	}
+
+	await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } });
 }
 
 module.exports = {
-    addComment,
-    deleteComment
-}
+	addComment,
+	deleteComment,
+};
